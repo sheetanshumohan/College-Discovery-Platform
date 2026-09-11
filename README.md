@@ -37,6 +37,7 @@ Choosing a college is one of the most significant financial and academic decisio
 - **Inspect** deep institutional profiles complete with academic degree listings, real historical placement compensation packages, and authentic student reviews.
 - **Compare candidate colleges side-by-side (2 to 3 at a time)** with automatic difference highlighting to spot the most affordable option or the highest starting salary.
 - **Save favorite institutions** to a personal shortlist with custom application deadlines and financial aid notes.
+- **Save and manage comparisons** to preserve side-by-side institutional matrices and revisit candidate evaluations anytime.
 
 ---
 
@@ -316,6 +317,7 @@ sequenceDiagram
 - **Strict 2–3 Comparison Rule:** Enforces side-by-side comparison of exactly 2 or 3 institutions to prevent horizontal clutter.
 - **Empty 3rd Slot Card:** When comparing 2 colleges, an intuitive placeholder invites the student to select a third institution.
 - **Difference & Leader Highlighting:** The most affordable tuition and the highest placement salary are dynamically highlighted in green with crown badges.
+- **Save & Revisit Comparisons:** Authenticated users can save custom comparison sets to their profile and reload them anytime.
 
 ### 4. Student Account & Shortlist Management (`/saved`)
 - **One-Click Bookmarking:** Save candidate institutions directly from cards or detail pages.
