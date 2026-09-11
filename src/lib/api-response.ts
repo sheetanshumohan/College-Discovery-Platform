@@ -26,7 +26,14 @@ export function successResponse<T>(
   return NextResponse.json({ data }, init);
 }
 
-export function errorResponse(code: string, message: string, status = 400, details?: unknown) {
+export function errorResponse(
+  code: string,
+  message: string,
+  status = 400,
+  details?: unknown,
+  headers?: Record<string, string>
+) {
+  const init: ResponseInit = { status, headers };
   return NextResponse.json(
     {
       error: {
@@ -35,6 +42,6 @@ export function errorResponse(code: string, message: string, status = 400, detai
         ...(details ? { details } : {}),
       },
     },
-    { status }
+    init
   );
 }

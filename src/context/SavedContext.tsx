@@ -171,6 +171,8 @@ export function SavedProvider({ children }: { children: React.ReactNode }) {
             }
             return true;
           } else {
+            const errData = await res.json().catch(() => null);
+            console.error('Failed to save college:', res.status, errData);
             // Revert optimistic add if save failed
             updateSavedStorage(currentList);
             return false;

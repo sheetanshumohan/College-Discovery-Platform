@@ -15,7 +15,6 @@ import {
   Bookmark,
   Check,
   Loader2,
-  Printer,
   Search,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -431,16 +430,6 @@ function CompareContent() {
                 )}
               </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.print()}
-                className="gap-1.5 border-slate-300 print:hidden cursor-pointer"
-                title="Print or Save as PDF"
-              >
-                <Printer className="w-3.5 h-3.5 text-slate-600" />
-                <span>Export PDF</span>
-              </Button>
 
               <Link href="/colleges" className="print:hidden">
                 <Button variant="outline" size="sm" className="gap-1.5 border-slate-300">

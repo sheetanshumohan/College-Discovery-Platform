@@ -129,6 +129,7 @@ export async function POST(request: NextRequest) {
       return errorResponse('ALREADY_SAVED', 'This college is already in your saved list', 409);
     }
     console.error('Error saving college:', error);
-    return errorResponse('INTERNAL_SERVER_ERROR', 'Failed to save college', 500);
+    const detailMsg = error instanceof Error ? error.message : undefined;
+    return errorResponse('INTERNAL_SERVER_ERROR', 'Failed to save college', 500, detailMsg);
   }
 }

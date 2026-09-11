@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Columns3, X, ArrowRight } from 'lucide-react';
@@ -11,14 +11,22 @@ export function CompareDock() {
   const router = useRouter();
   const pathname = usePathname();
   const { compareItems, compareIds, removeFromCompare, clearCompare, maxLimit } = useCompare();
+  const [dismissedCount, setDismissedCount] = useState<number | null>(null);
 
-  if (compareItems.length === 0) return null;
+  const itemsCount = compareItems.length;
+  const isDismissed = dismissedCount === itemsCount && itemsCount > 0;
+
+  // Hide completely when on the compare page, when empty, or when dismissed
+  if (itemsCount === 0 || pathname.startsWith('/compare') || isDismissed) {
+    return null;
+  }
 
   const compareUrl = `/compare?ids=${compareIds.join(',')}`;
 
   const handleClearAll = (e: React.MouseEvent) => {
     e.preventDefault();
     clearCompare();
+    setDismissedCount(null);
     if (pathname.startsWith('/compare')) {
       if (typeof window !== 'undefined') {
         window.history.replaceState(null, '', '/compare');
@@ -61,12 +69,22 @@ export function CompareDock() {
           </span>
         </div>
 
-        <button
-          onClick={handleClearAll}
-          className="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
-        >
-          Clear All
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleClearAll}
+            className="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+          >
+            Clear All
+          </button>
+          <button
+            onClick={() => setDismissedCount(itemsCount)}
+            aria-label="Close comparison tray"
+            className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors cursor-pointer"
+            title="Dismiss tray"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Selected Items List */}
@@ -97,8 +115,12 @@ export function CompareDock() {
             Select at least 1 more college to compare.
           </p>
         ) : (
-          <Link href={compareUrl} className="w-full">
-            <Button size="sm" variant="primary" className="w-full justify-between shadow-xs">
+          <Link
+            href={compareUrl}
+            onClick={() => setDismissedCount(itemsCount)}
+            className="w-full"
+          >
+            <Button size="sm" variant="primary" className="w-full justify-between shadow-xs cursor-pointer">
               <span>Compare Selected ({compareItems.length})</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
