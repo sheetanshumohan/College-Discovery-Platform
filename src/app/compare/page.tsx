@@ -15,6 +15,8 @@ import {
   Bookmark,
   Check,
   Loader2,
+  Printer,
+  Search,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCompare } from '@/context/CompareContext';
@@ -93,6 +95,43 @@ function CompareContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Quick-add 3rd college search state
+  const [quickSearchTerm, setQuickSearchTerm] = useState('');
+  const [quickSuggestions, setQuickSuggestions] = useState<Array<{ id: string; name: string; city: string; state: string }>>([]);
+  const [isQuickSearching, setIsQuickSearching] = useState(false);
+
+  useEffect(() => {
+    if (!quickSearchTerm.trim()) {
+      setQuickSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        setIsQuickSearching(true);
+        const res = await fetch(`/api/colleges/suggestions?q=${encodeURIComponent(quickSearchTerm.trim())}`);
+        if (res.ok) {
+          const json = await res.json();
+          const filtered = (json.data?.colleges || []).filter(
+            (c: { id: string }) => !colleges.some((col) => col.id === c.id)
+          );
+          setQuickSuggestions(filtered);
+        }
+      } catch (err) {
+        console.error('Quick search error:', err);
+      } finally {
+        setIsQuickSearching(false);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [quickSearchTerm, colleges]);
+
+  const handleQuickAddCollege = (collegeId: string) => {
+    const updatedIds = [...colleges.map((c) => c.id), collegeId];
+    setQuickSearchTerm('');
+    setQuickSuggestions([]);
+    router.push(`/compare?ids=${updatedIds.join(',')}`);
+  };
 
   const handleOpenSaveModal = () => {
     if (!user) {
@@ -367,14 +406,25 @@ function CompareContent() {
                 )}
               </Button>
 
-              <Link href="/colleges">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="gap-1.5 border-slate-300 print:hidden cursor-pointer"
+                title="Print or Save as PDF"
+              >
+                <Printer className="w-3.5 h-3.5 text-slate-600" />
+                <span>Export PDF</span>
+              </Button>
+
+              <Link href="/colleges" className="print:hidden">
                 <Button variant="outline" size="sm" className="gap-1.5 border-slate-300">
                   <Plus className="w-3.5 h-3.5" /> Add Another College
                 </Button>
               </Link>
               <button
                 onClick={handleClearAll}
-                className="text-xs font-semibold text-slate-500 hover:text-slate-900 px-3 py-2 cursor-pointer transition-colors"
+                className="text-xs font-semibold text-slate-500 hover:text-slate-900 px-3 py-2 cursor-pointer transition-colors print:hidden"
               >
                 Clear Comparison
               </button>
@@ -389,17 +439,17 @@ function CompareContent() {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-sm min-w-[640px]">
-              {/* College Card Headers */}
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/50">
-                  <th className="p-4 sm:p-5 w-48 sm:w-64 font-bold text-slate-500 uppercase text-xs tracking-wider sticky left-0 bg-slate-50 z-10 border-r border-slate-200">
+              {/* College Card Headers (Sticky on scroll) */}
+              <thead className="sticky top-0 z-20 shadow-xs bg-white/95 backdrop-blur-md">
+                <tr className="border-b border-slate-200">
+                  <th className="p-4 sm:p-5 w-48 sm:w-64 font-bold text-slate-500 uppercase text-xs tracking-wider sticky left-0 top-0 bg-slate-50/98 backdrop-blur-md z-30 border-r border-slate-200">
                     Institution
                   </th>
 
                   {colleges.map((college) => (
                     <th
                       key={college.id}
-                      className="p-4 sm:p-5 w-64 sm:w-80 align-top border-r border-slate-100 last:border-r-0"
+                      className="p-4 sm:p-5 w-64 sm:w-80 align-top bg-white/95 backdrop-blur-md border-r border-slate-100 last:border-r-0"
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -416,7 +466,7 @@ function CompareContent() {
                         <button
                           onClick={() => handleRemoveCollege(college.id)}
                           aria-label={`Remove ${college.name} from comparison`}
-                          className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                          className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer print:hidden"
                           title="Remove from comparison"
                         >
                           <X className="w-4 h-4" />
@@ -437,18 +487,65 @@ function CompareContent() {
                     </th>
                   ))}
 
-                  {/* Empty 3rd slot placeholder if only 2 colleges selected */}
+                  {/* Interactive Quick-Add 3rd Slot placeholder if only 2 colleges selected */}
                   {colleges.length === 2 && (
-                    <th className="p-4 sm:p-5 w-64 sm:w-80 align-middle text-center bg-slate-50/30">
-                      <div className="p-6 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center">
-                        <Plus className="w-8 h-8 text-slate-400 mb-2" />
-                        <span className="text-xs font-bold text-slate-700">Compare 3rd College</span>
-                        <p className="text-[11px] text-slate-500 mt-0.5 mb-3">Add another institution</p>
-                        <Link href="/colleges">
-                          <Button size="sm" variant="outline">
-                            Select College
-                          </Button>
-                        </Link>
+                    <th className="p-4 sm:p-5 w-64 sm:w-80 align-top bg-slate-50/40 border-r border-slate-100">
+                      <div className="p-4 border-2 border-dashed border-indigo-200 rounded-xl bg-white/90 flex flex-col items-center justify-center text-center">
+                        <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center mb-1.5">
+                          <Plus className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-800">Add 3rd College</span>
+                        <p className="text-[11px] text-slate-500 mb-2.5">Search and compare</p>
+
+                        {/* Interactive search box */}
+                        <div className="w-full relative">
+                          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 focus-within:bg-white focus-within:border-indigo-400 transition-colors">
+                            <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <input
+                              type="text"
+                              value={quickSearchTerm}
+                              onChange={(e) => setQuickSearchTerm(e.target.value)}
+                              placeholder="Type college name..."
+                              className="w-full bg-transparent text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                            />
+                            {quickSearchTerm && (
+                              <button
+                                type="button"
+                                onClick={() => setQuickSearchTerm('')}
+                                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Quick Suggestions Dropdown */}
+                          {quickSearchTerm.trim() && (
+                            <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-xl border border-slate-200 z-50 max-h-48 overflow-y-auto text-left divide-y divide-slate-100">
+                              {isQuickSearching ? (
+                                <div className="p-3 text-[11px] text-slate-500 text-center animate-pulse">
+                                  Searching colleges...
+                                </div>
+                              ) : quickSuggestions.length > 0 ? (
+                                quickSuggestions.map((sug) => (
+                                  <button
+                                    key={sug.id}
+                                    type="button"
+                                    onClick={() => handleQuickAddCollege(sug.id)}
+                                    className="w-full px-3 py-2 text-left hover:bg-indigo-50/80 text-slate-800 text-xs flex flex-col transition-colors cursor-pointer"
+                                  >
+                                    <span className="font-semibold text-slate-900 truncate">{sug.name}</span>
+                                    <span className="text-[10px] text-slate-500">{sug.city}, {sug.state}</span>
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="p-3 text-[11px] text-slate-500 text-center">
+                                  No colleges found
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </th>
                   )}

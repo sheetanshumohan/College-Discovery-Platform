@@ -20,6 +20,7 @@ import {
 import { getCollegeBySlug } from '@/lib/colleges';
 import { Badge } from '@/components/ui/Badge';
 import { CollegeDetailActions } from '@/components/colleges/detail/CollegeDetailActions';
+import { AdmissionsCalculator } from '@/components/colleges/AdmissionsCalculator';
 
 export const dynamic = 'force-dynamic';
 
@@ -611,6 +612,15 @@ export default async function CollegeDetailPage({ params }: CollegePageProps) {
                 </div>
               </div>
             )}
+
+            {/* Interactive Admissions Chance Calculator */}
+            <AdmissionsCalculator
+              collegeName={college.name}
+              avgGpa={college.avgGpa}
+              avgSatScore={college.avgSatScore}
+              avgActScore={college.avgActScore}
+              acceptanceRate={college.acceptanceRate}
+            />
 
             {/* Compare CTA Sidebar Widget */}
             <div className="bg-indigo-900 text-white rounded-xl p-6 shadow-xs relative overflow-hidden">
