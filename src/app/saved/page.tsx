@@ -16,6 +16,10 @@ import {
   Search,
   Columns3,
   Calendar,
+  Pencil,
+  Clock,
+  X,
+  FileEdit,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCompare } from '@/context/CompareContext';
@@ -31,8 +35,10 @@ interface SavedItemRecord {
   userId: string;
   collegeId: string;
   notes?: string | null;
+  deadline?: string | null;
   createdAt: string;
-  college: CollegeSummary;
+  updatedAt?: string;
+  college: CollegeSummary & { applicationDeadline?: string | null };
 }
 
 interface SavedComparisonRecord {
@@ -60,6 +66,13 @@ function SavedContent() {
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortByDeadline, setSortByDeadline] = useState(false);
+
+  // Inline Note & Deadline Editing state
+  const [editingItem, setEditingItem] = useState<SavedItemRecord | null>(null);
+  const [editNotes, setEditNotes] = useState('');
+  const [editDeadline, setEditDeadline] = useState('');
+  const [isUpdatingRecord, setIsUpdatingRecord] = useState(false);
 
   // Saved Comparisons state
   const [savedComparisons, setSavedComparisons] = useState<SavedComparisonRecord[]>([]);
@@ -187,17 +200,70 @@ function SavedContent() {
     }
   };
 
-  // Filter saved items by local search query
-  const filteredItems = savedItems.filter((item) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase().trim();
-    return (
-      item.college.name.toLowerCase().includes(q) ||
-      item.college.location.toLowerCase().includes(q) ||
-      (item.college.city && item.college.city.toLowerCase().includes(q)) ||
-      (item.college.state && item.college.state.toLowerCase().includes(q))
-    );
-  });
+  const handleOpenEdit = (item: SavedItemRecord) => {
+    setEditingItem(item);
+    setEditNotes(item.notes || '');
+    setEditDeadline(item.deadline || item.college.applicationDeadline || '');
+  };
+
+  const handleSaveNote = async () => {
+    if (!editingItem) return;
+    setIsUpdatingRecord(true);
+    try {
+      const res = await fetch(`/api/saved/${editingItem.collegeId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: editNotes, deadline: editDeadline }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data) {
+          setSavedItems((prev) =>
+            prev.map((item) =>
+              item.collegeId === editingItem.collegeId
+                ? {
+                    ...item,
+                    notes: json.data.notes,
+                    deadline: json.data.deadline,
+                    updatedAt: json.data.updatedAt,
+                  }
+                : item
+            )
+          );
+        }
+        setEditingItem(null);
+      }
+    } catch (err) {
+      console.error('Failed to update note:', err);
+    } finally {
+      setIsUpdatingRecord(false);
+    }
+  };
+
+  // Filter and sort saved items
+  const filteredItems = React.useMemo(() => {
+    const items = savedItems.filter((item) => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase().trim();
+      return (
+        item.college.name.toLowerCase().includes(q) ||
+        item.college.location.toLowerCase().includes(q) ||
+        (item.college.city && item.college.city.toLowerCase().includes(q)) ||
+        (item.college.state && item.college.state.toLowerCase().includes(q))
+      );
+    });
+
+    if (!sortByDeadline) return items;
+
+    return [...items].sort((a, b) => {
+      const deadA = a.deadline || a.college.applicationDeadline;
+      const deadB = b.deadline || b.college.applicationDeadline;
+      if (!deadA && !deadB) return 0;
+      if (!deadA) return 1;
+      if (!deadB) return -1;
+      return new Date(deadA).getTime() - new Date(deadB).getTime();
+    });
+  }, [savedItems, searchQuery, sortByDeadline]);
 
   if (isAuthLoading) {
     return (
@@ -369,18 +435,33 @@ function SavedContent() {
                     {filteredItems.length === 1 ? 'saved college' : 'saved colleges'}
                   </div>
 
-                  {savedItems.length > 1 && (
-                    <div className="relative w-full sm:w-64">
-                      <input
-                        type="text"
-                        placeholder="Search in saved..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
-                      />
-                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2 pointer-events-none" />
-                    </div>
-                  )}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSortByDeadline(!sortByDeadline)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                        sortByDeadline
+                          ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-2xs font-bold'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Sort by closest deadline</span>
+                    </button>
+
+                    {savedItems.length > 1 && (
+                      <div className="relative w-full sm:w-60">
+                        <input
+                          type="text"
+                          placeholder="Search in saved..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
+                        />
+                        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2 pointer-events-none" />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Saved Cards Grid */}
@@ -397,7 +478,7 @@ function SavedContent() {
                           isRemoving ? 'opacity-40 pointer-events-none' : ''
                         }`}
                       >
-                        {/* Card Header Banner with Quick Removal */}
+                        {/* Card Header Banner with Quick Removal & Inline Edit */}
                         <div className="p-5 pb-3">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1 min-w-0">
@@ -426,16 +507,27 @@ function SavedContent() {
                               </div>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => handleRemove(college.id)}
-                              disabled={isRemoving}
-                              aria-label={`Remove ${college.name} from saved list`}
-                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                              title="Remove from saved"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEdit(item)}
+                                aria-label={`Edit notes and deadline for ${college.name}`}
+                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                                title="Edit notes & application deadline"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemove(college.id)}
+                                disabled={isRemoving}
+                                aria-label={`Remove ${college.name} from saved list`}
+                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                title="Remove from saved"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
 
                           <div className="flex items-center gap-2 mt-3 text-xs">
@@ -447,6 +539,30 @@ function SavedContent() {
                               Saved on {formatDate(item.createdAt)}
                             </span>
                           </div>
+
+                          {/* Deadline & Note display */}
+                          {(item.deadline || college.applicationDeadline) && (
+                            <div className="flex items-center gap-1.5 text-xs text-indigo-700 bg-indigo-50/70 border border-indigo-100 px-2.5 py-1 rounded-md mt-2.5">
+                              <Clock className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                              <span>
+                                App Deadline:{' '}
+                                <strong className="font-semibold">
+                                  {item.deadline || college.applicationDeadline}
+                                </strong>
+                              </span>
+                            </div>
+                          )}
+
+                          {item.notes && (
+                            <div className="mt-2.5 text-xs text-slate-600 bg-slate-50 border border-slate-200/70 p-2.5 rounded-lg italic">
+                              &ldquo;{item.notes}&rdquo;
+                              {item.updatedAt && (
+                                <span className="block not-italic text-[10px] text-slate-400 mt-1">
+                                  Notes updated {formatDate(item.updatedAt)}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         {/* Metrics Strip */}
@@ -629,6 +745,93 @@ function SavedContent() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+        {/* Inline Note & Deadline Editing Modal */}
+        {editingItem && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <FileEdit className="w-5 h-5 text-indigo-600" />
+                  <h3 className="font-bold text-base text-slate-900">
+                    Edit Application Timeline & Notes
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingItem(null)}
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  aria-label="Close dialog"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div>
+                <p className="text-xs text-slate-500 mb-4">
+                  Manage your application deadline and personal strategy notes for{' '}
+                  <strong className="text-slate-800">{editingItem.college.name}</strong>.
+                </p>
+
+                <div className="mb-4">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Target Application Deadline
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="e.g. Jan 15, 2025 or Early Decision"
+                      value={editDeadline}
+                      onChange={(e) => setEditDeadline(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                    />
+                    <Clock className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Personal Notes & Strategy
+                  </label>
+                  <textarea
+                    rows={4}
+                    placeholder="e.g. Spoke with admissions dean; strong robotics program; application submitted via Common App..."
+                    value={editNotes}
+                    onChange={(e) => setEditNotes(e.target.value)}
+                    maxLength={1000}
+                    className="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white resize-none"
+                  />
+                  <div className="text-right text-[10px] text-slate-400 mt-1">
+                    {editNotes.length} / 1000 characters
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditingItem(null)}
+                  disabled={isUpdatingRecord}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveNote}
+                  disabled={isUpdatingRecord}
+                  className="gap-1.5 shadow-xs"
+                >
+                  {isUpdatingRecord ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </main>

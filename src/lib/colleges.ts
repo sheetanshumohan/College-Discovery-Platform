@@ -6,9 +6,11 @@ export const getCollegeBySlug = cache(async (slug: string) => {
     return null;
   }
 
+  const normalizedSlug = decodeURIComponent(slug).trim().toLowerCase();
+
   try {
     const college = await prisma.college.findUnique({
-      where: { slug: slug.toLowerCase() },
+      where: { slug: normalizedSlug },
       include: {
         courses: {
           select: {

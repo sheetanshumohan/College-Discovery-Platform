@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { loginSchema } from '@/lib/validations';
 import { verifyPassword, createSessionToken, AUTH_COOKIE_NAME } from '@/lib/auth';
 import { errorResponse, successResponse } from '@/lib/api-response';
+import { checkLoginRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +20,21 @@ export async function POST(request: NextRequest) {
 
     const { email, password } = parseResult.data;
     const normalizedEmail = email.toLowerCase().trim();
+
+    // 5 attempts per minute brute-force limit
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'local';
+    const rateLimitKey = `${clientIp}:${normalizedEmail}`;
+    const rateLimit = checkLoginRateLimit(rateLimitKey, 5, 60 * 1000);
+
+    if (!rateLimit.allowed) {
+      return errorResponse(
+        'RATE_LIMIT_EXCEEDED',
+        `Too many login attempts. Please try again in ${rateLimit.resetSeconds} seconds.`,
+        429,
+        undefined,
+        { 'Retry-After': String(rateLimit.resetSeconds) }
+      );
+    }
 
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },

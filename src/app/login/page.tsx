@@ -18,6 +18,18 @@ function LoginFormContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [touched, setTouched] = useState<{ email?: boolean; password?: boolean }>({});
+
+  const errors = React.useMemo(() => {
+    const errs: Record<string, string> = {};
+    if (touched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errs.email = 'Please enter a valid email address';
+    }
+    if (touched.password && !password) {
+      errs.password = 'Password is required';
+    }
+    return errs;
+  }, [email, password, touched]);
 
   // If already authenticated, redirect
   React.useEffect(() => {
@@ -106,11 +118,19 @@ function LoginFormContent() {
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
                 disabled={isSubmitting}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white disabled:opacity-60 transition-colors"
+                className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:bg-white disabled:opacity-60 transition-colors ${
+                  errors.email
+                    ? 'border-rose-300 focus:ring-rose-500 bg-rose-50/20'
+                    : 'border-slate-300 focus:ring-indigo-500'
+                }`}
               />
               <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
             </div>
+            {errors.email && (
+              <p className="mt-1 text-xs text-rose-600 font-medium">{errors.email}</p>
+            )}
           </div>
 
           <div>
@@ -131,8 +151,13 @@ function LoginFormContent() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
                 disabled={isSubmitting}
-                className="w-full pl-10 pr-11 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white disabled:opacity-60 transition-colors"
+                className={`w-full pl-10 pr-11 py-2.5 bg-slate-50 border rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:bg-white disabled:opacity-60 transition-colors ${
+                  errors.password
+                    ? 'border-rose-300 focus:ring-rose-500 bg-rose-50/20'
+                    : 'border-slate-300 focus:ring-indigo-500'
+                }`}
               />
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
               <button
@@ -144,6 +169,9 @@ function LoginFormContent() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            {errors.password && (
+              <p className="mt-1 text-xs text-rose-600 font-medium">{errors.password}</p>
+            )}
           </div>
 
           <Button

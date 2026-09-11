@@ -20,6 +20,8 @@ import {
 import { getCollegeBySlug } from '@/lib/colleges';
 import { Badge } from '@/components/ui/Badge';
 import { CollegeDetailActions } from '@/components/colleges/detail/CollegeDetailActions';
+import { CollegeDetailTabs } from '@/components/colleges/detail/CollegeDetailTabs';
+import { PlacementRoiBar } from '@/components/colleges/detail/PlacementRoiBar';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,6 +73,16 @@ export default async function CollegeDetailPage({ params }: CollegePageProps) {
       currency: 'USD',
       maximumFractionDigits: 0,
     }).format(val);
+  };
+
+  const formatPackageSalary = (val?: number | null) => {
+    if (val === undefined || val === null) return 'N/A';
+    const inDollars = val < 1000 ? val * 1000 : val;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0,
+    }).format(inDollars);
   };
 
   const formatPercent = (val?: number | null) => {
@@ -272,13 +284,16 @@ export default async function CollegeDetailPage({ params }: CollegePageProps) {
         </div>
       </header>
 
+      {/* URL Hash Deep-Linked Sticky Sub-Navigation */}
+      <CollegeDetailTabs />
+
       {/* Main Detail Grid Layout */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Column (2/3): Overview, Courses, Placements, Reviews */}
           <div className="lg:col-span-2 space-y-10">
             {/* Overview Section */}
-            <section className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-xs">
+            <section id="overview" className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-xs">
               <div className="flex items-center gap-2 mb-4">
                 <Building2 className="w-5 h-5 text-indigo-600" />
                 <h2 className="text-xl font-bold text-slate-900">About {college.name}</h2>
@@ -376,52 +391,66 @@ export default async function CollegeDetailPage({ params }: CollegePageProps) {
               </div>
 
               {college.placements.length > 0 ? (
-                <div className="space-y-4">
-                  {college.placements.map((placement) => (
-                    <div
-                      key={placement.id}
-                      className="p-5 rounded-xl bg-slate-50 border border-slate-200/80"
-                    >
-                      <div className="flex items-center justify-between mb-3 border-b border-slate-200/60 pb-2">
-                        <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
-                          Class of {placement.year}
-                        </span>
-                        <span className="text-xs font-semibold text-emerald-700 inline-flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          {formatPercent(placement.placementRate)} Placement Rate
-                        </span>
+                <div className="space-y-6">
+                  {/* Visual Placement & ROI Comparison Bar */}
+                  <PlacementRoiBar
+                    annualTuition={college.fees}
+                    averagePackage={college.placements[0].averagePackage}
+                    highestPackage={college.placements[0].highestPackage}
+                    placementRate={college.placements[0].placementRate}
+                    year={college.placements[0].year}
+                  />
+
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      Historical Placement Reports
+                    </h3>
+                    {college.placements.map((placement) => (
+                      <div
+                        key={placement.id}
+                        className="p-5 rounded-xl bg-slate-50 border border-slate-200/80"
+                      >
+                        <div className="flex items-center justify-between mb-3 border-b border-slate-200/60 pb-2">
+                          <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                            Class of {placement.year}
+                          </span>
+                          <span className="text-xs font-semibold text-emerald-700 inline-flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            {formatPercent(placement.placementRate)} Placement Rate
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                          <div>
+                            <span className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                              Average Package
+                            </span>
+                            <span className="block text-base sm:text-lg font-bold font-mono text-slate-900 mt-0.5">
+                              {formatPackageSalary(placement.averagePackage)}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                              Highest Package
+                            </span>
+                            <span className="block text-base sm:text-lg font-bold font-mono text-indigo-600 mt-0.5">
+                              {formatPackageSalary(placement.highestPackage)}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                              Employment Rate
+                            </span>
+                            <span className="block text-base sm:text-lg font-bold font-mono text-slate-900 mt-0.5">
+                              {formatPercent(placement.placementRate)}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        <div>
-                          <span className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                            Average Package
-                          </span>
-                          <span className="block text-base sm:text-lg font-bold font-mono text-slate-900 mt-0.5">
-                            {formatCurrency(placement.averagePackage)}
-                          </span>
-                        </div>
-
-                        <div>
-                          <span className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                            Highest Package
-                          </span>
-                          <span className="block text-base sm:text-lg font-bold font-mono text-indigo-600 mt-0.5">
-                            {formatCurrency(placement.highestPackage)}
-                          </span>
-                        </div>
-
-                        <div>
-                          <span className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                            Employment Rate
-                          </span>
-                          <span className="block text-base sm:text-lg font-bold font-mono text-slate-900 mt-0.5">
-                            {formatPercent(placement.placementRate)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-200">

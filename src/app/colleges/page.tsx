@@ -512,8 +512,8 @@ function CollegesDiscoveryContent() {
               <div className="my-6">
                 <EmptyState
                   title="No colleges match your current filters"
-                  description="We couldn't find any institutions matching all of your filter parameters. Try loosening your fee or rating requirements."
-                  actionLabel="Reset All Filters"
+                  description="We couldn't find any institutions matching all of your filter parameters. Click below to clear all active filters and return to the complete catalog."
+                  actionLabel="Clear filters to view all 108 colleges"
                   onAction={handleResetAll}
                 />
               </div>

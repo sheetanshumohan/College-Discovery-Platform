@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       return errorResponse('VALIDATION_ERROR', issue.message, 400);
     }
 
-    const { collegeId, notes } = parseResult.data;
+    const { collegeId, notes, deadline } = parseResult.data;
 
     // Verify target college exists
     const college = await prisma.college.findUnique({
@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         collegeId,
         notes: notes?.trim() || null,
+        deadline: deadline?.trim() || null,
       },
       include: {
         college: {

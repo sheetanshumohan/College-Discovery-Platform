@@ -67,6 +67,20 @@ export function FilterSidebar({
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const [locationInput, setLocationInput] = useState(filters.location || '');
   const [sliderFeesInput, setSliderFeesInput] = useState<number>(filters.maxFees || 70000);
+  const [facets, setFacets] = useState<{
+    total?: number;
+    locations?: Record<string, number>;
+    ratings?: Record<string, number>;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/colleges/facets')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json?.data) setFacets(json.data);
+      })
+      .catch((e) => console.error('Facet fetch error:', e));
+  }, []);
 
   // Synchronize during render when external props change
   const [prevSearchProp, setPrevSearchProp] = useState(filters.search);
@@ -224,6 +238,8 @@ export function FilterSidebar({
             const isSelected =
               (!filters.location && loc.code === '') ||
               filters.location?.toUpperCase() === loc.code;
+            const count = loc.code ? facets?.locations?.[loc.code] : facets?.total;
+
             return (
               <button
                 key={loc.code || 'all'}
@@ -233,13 +249,24 @@ export function FilterSidebar({
                   setLocationInput(newLoc || '');
                   onChange({ ...filters, location: newLoc });
                 }}
-                className={`text-xs px-2.5 py-1 rounded-md transition-colors font-medium cursor-pointer ${
+                className={`text-xs px-2.5 py-1 rounded-md transition-colors font-medium cursor-pointer inline-flex items-center gap-1.5 ${
                   isSelected
                     ? 'bg-indigo-600 text-white shadow-2xs font-semibold'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                {loc.code || loc.label}
+                <span>{loc.code || loc.label}</span>
+                {count !== undefined && (
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                      isSelected
+                        ? 'bg-indigo-700/80 text-indigo-100'
+                        : 'bg-slate-200 text-slate-600'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
               </button>
             );
           })}

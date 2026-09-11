@@ -13,8 +13,11 @@ export async function GET(
       return errorResponse('INVALID_SLUG', 'A valid college slug must be provided', 400);
     }
 
+    // Slug normalization: handle special characters, uri-encoding, uppercase
+    const normalizedSlug = decodeURIComponent(slug).trim().toLowerCase();
+
     const college = await prisma.college.findUnique({
-      where: { slug: slug.toLowerCase() },
+      where: { slug: normalizedSlug },
       include: {
         courses: {
           select: {
@@ -58,7 +61,14 @@ export async function GET(
       return errorResponse('NOT_FOUND', `College with slug "${slug}" not found`, 404);
     }
 
-    return successResponse(college);
+    return successResponse(
+      college,
+      200,
+      undefined,
+      {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      }
+    );
   } catch (error) {
     console.error('Error fetching college detail:', error);
     return errorResponse('INTERNAL_SERVER_ERROR', 'Failed to retrieve college details', 500);

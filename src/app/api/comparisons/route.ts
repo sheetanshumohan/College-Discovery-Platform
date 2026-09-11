@@ -93,6 +93,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Deduplication check: Prevent saving identical comparison combinations
+    const existingComparisons = await prisma.savedComparison.findMany({
+      where: { userId: user.id },
+      select: { id: true, collegeIds: true },
+    });
+
+    const targetKey = [...collegeIds].sort().join(',');
+    const hasDuplicate = existingComparisons.some(
+      (comp) => [...comp.collegeIds].sort().join(',') === targetKey
+    );
+
+    if (hasDuplicate) {
+      return errorResponse(
+        'ALREADY_SAVED',
+        'You have already saved a comparison with this exact combination of colleges',
+        409
+      );
+    }
+
     // Auto-generate name if not provided
     const comparisonName =
       customName?.trim() ||
