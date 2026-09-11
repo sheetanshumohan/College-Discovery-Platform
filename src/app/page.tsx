@@ -78,7 +78,7 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* 1. HERO SECTION */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-100/80 via-slate-50 to-white pt-16 pb-20 sm:pt-24 sm:pb-28 border-b border-slate-200">
+      <section className="relative z-20 bg-gradient-to-b from-slate-100/80 via-slate-50 to-white pt-16 pb-20 sm:pt-24 sm:pb-28 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           {/* Tag Pill */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-xs font-semibold mb-6 shadow-2xs">
@@ -103,13 +103,15 @@ export default async function HomePage() {
 
         {/* Subtle Background Accent Pattern */}
         <div
-          className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"
+          className="absolute inset-0 overflow-hidden pointer-events-none"
           aria-hidden="true"
-        />
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30" />
+        </div>
       </section>
 
       {/* 2. STATS AT A GLANCE */}
-      <section className="py-8 bg-white border-b border-slate-200">
+      <section className="relative z-10 py-8 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div className="p-3">

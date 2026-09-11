@@ -210,11 +210,11 @@ export function HeroSearch() {
   ];
 
   return (
-    <div ref={containerRef} className="w-full max-w-3xl mx-auto relative">
+    <div ref={containerRef} className="w-full max-w-3xl mx-auto relative z-30">
       {/* Primary Search Form Box */}
       <form
         onSubmit={handleSearch}
-        className="bg-white p-2.5 sm:p-3 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/90 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 transition-all focus-within:ring-2 focus-within:ring-indigo-500/25 focus-within:border-indigo-500 relative z-20"
+        className="bg-white p-2.5 sm:p-3 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/90 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 transition-all focus-within:ring-2 focus-within:ring-indigo-500/25 focus-within:border-indigo-500 relative z-30"
       >
         {/* Keyword Search Input */}
         <div className="flex-1 flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200/70 focus-within:bg-white focus-within:border-indigo-400 transition-colors relative">
@@ -304,7 +304,7 @@ export function HeroSearch() {
 
       {/* ── KEYWORD SUGGESTIONS DROPDOWN ── */}
       {showSearchDropdown && (
-        <div className="absolute top-[calc(100%+8px)] left-0 right-0 sm:right-56 bg-white/98 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 z-30 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute top-[calc(100%+8px)] left-0 right-0 sm:right-56 bg-white/98 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
           {/* Header Title */}
           <div className="px-4 py-2.5 bg-slate-50/90 border-b border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
             <span className="flex items-center gap-1.5 text-indigo-600 font-semibold">
@@ -420,7 +420,7 @@ export function HeroSearch() {
 
       {/* ── LOCATION SUGGESTIONS DROPDOWN ── */}
       {showLocationDropdown && (
-        <div className="absolute top-[calc(100%+8px)] right-0 sm:w-80 bg-white/98 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 z-30 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute top-[calc(100%+8px)] right-0 sm:w-80 bg-white/98 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="px-4 py-2.5 bg-slate-50/90 border-b border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
             <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
               <MapPin className="w-3.5 h-3.5" />
