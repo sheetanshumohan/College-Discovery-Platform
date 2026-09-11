@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
 
     const queryObj = {
       search: searchParams.get('search') || undefined,
+      course: searchParams.get('course') || undefined,
       location: searchParams.get('location') || undefined,
       minFees: searchParams.get('minFees') || undefined,
       maxFees: searchParams.get('maxFees') || undefined,
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
       return errorResponse('INVALID_PARAMETERS', issue.message, 400, parseResult.error.flatten());
     }
 
-    const { search, location, minFees, maxFees, minRating, sort, page, limit } = parseResult.data;
+    const { search, course, location, minFees, maxFees, minRating, sort, page, limit } = parseResult.data;
 
     // Build database-level where clause for Prisma
     const where: Prisma.CollegeWhereInput = {
@@ -33,6 +34,16 @@ export async function GET(request: NextRequest) {
     };
 
     const andConditions = where.AND as Prisma.CollegeWhereInput[];
+
+    if (course) {
+      andConditions.push({
+        courses: {
+          some: {
+            name: { contains: course, mode: 'insensitive' },
+          },
+        },
+      });
+    }
 
     if (search) {
       andConditions.push({

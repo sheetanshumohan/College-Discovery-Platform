@@ -5,16 +5,18 @@ import { X, RotateCcw } from 'lucide-react';
 
 interface ActiveFilterChipsProps {
   search?: string;
+  course?: string;
   location?: string;
   minFees?: number;
   maxFees?: number;
   minRating?: number;
-  onRemove: (key: 'search' | 'location' | 'minFees' | 'maxFees' | 'minRating') => void;
+  onRemove: (key: 'search' | 'course' | 'location' | 'minFees' | 'maxFees' | 'minRating') => void;
   onResetAll: () => void;
 }
 
 export function ActiveFilterChips({
   search,
+  course,
   location,
   minFees,
   maxFees,
@@ -23,7 +25,7 @@ export function ActiveFilterChips({
   onResetAll,
 }: ActiveFilterChipsProps) {
   const hasActiveFilters = Boolean(
-    search || location || minFees !== undefined || maxFees !== undefined || minRating !== undefined
+    search || course || location || minFees !== undefined || maxFees !== undefined || minRating !== undefined
   );
 
   if (!hasActiveFilters) return null;
@@ -48,6 +50,19 @@ export function ActiveFilterChips({
             onClick={() => onRemove('search')}
             aria-label="Remove search filter"
             className="hover:text-indigo-900 cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </span>
+      )}
+
+      {course && (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs">
+          Major: &ldquo;{course}&rdquo;
+          <button
+            onClick={() => onRemove('course')}
+            aria-label="Remove major filter"
+            className="hover:text-purple-900 cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>

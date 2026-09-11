@@ -158,10 +158,10 @@ export function HeroSearch() {
   };
 
   const handleSelectMajor = (major: string) => {
-    setSearchTerm(major);
+    setSearchTerm('');
     setShowSearchDropdown(false);
     const params = new URLSearchParams();
-    params.set('search', major);
+    params.set('course', major);
     if (locationTerm.trim()) params.set('location', locationTerm.trim());
     router.push(`/colleges?${params.toString()}`);
   };

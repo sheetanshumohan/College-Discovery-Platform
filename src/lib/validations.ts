@@ -15,6 +15,7 @@ export type SortOption = z.infer<typeof SortOptionEnum>;
 export const collegeQuerySchema = z
   .object({
     search: z.string().optional(),
+    course: z.string().optional(),
     location: z.string().optional(),
     minFees: z.coerce.number().int().min(0, 'minFees must be non-negative').optional(),
     maxFees: z.coerce.number().int().min(0, 'maxFees must be non-negative').optional(),

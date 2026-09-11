@@ -57,6 +57,25 @@ test.describe('CollegeFinder Backend API Test Suite', () => {
       }
     });
 
+    test('Course filter strictly returns colleges offering the specified program', async () => {
+      const req = new NextRequest('http://localhost:3000/api/colleges?course=Computer%20Science&limit=10');
+      const res = await getColleges(req);
+      assert.equal(res.status, 200);
+
+      const json = await res.json();
+      assert.ok(json.data.length > 0);
+      for (const item of json.data) {
+        // Verify in database that this college actually offers Computer Science
+        const count = await prisma.course.count({
+          where: {
+            collegeId: item.id,
+            name: { contains: 'Computer Science', mode: 'insensitive' },
+          },
+        });
+        assert.ok(count > 0, `College ${item.name} does not offer Computer Science`);
+      }
+    });
+
     test('Location filter matches city or state', async () => {
       const req = new NextRequest('http://localhost:3000/api/colleges?location=CA');
       const res = await getColleges(req);

@@ -138,6 +138,7 @@ const collegesData: SeedCollegeInput[] = [
     applicationDeadline: "January 1",
     websiteUrl: "https://www.harvard.edu",
     courses: [
+      { name: "Computer Science (SEAS)", degree: "A.B.", duration: "4 Years", fees: 57261 },
       { name: "Economics", degree: "A.B.", duration: "4 Years", fees: 57261 },
       { name: "Government & International Relations", degree: "A.B.", duration: "4 Years", fees: 57261 },
       { name: "Applied Mathematics", degree: "A.B.", duration: "4 Years", fees: 57261 },
@@ -213,6 +214,7 @@ const collegesData: SeedCollegeInput[] = [
     applicationDeadline: "February 1",
     websiteUrl: "https://umich.edu",
     courses: [
+      { name: "Computer Science", degree: "B.S.E.", duration: "4 Years", fees: 16178 },
       { name: "Aerospace Engineering", degree: "B.S.E.", duration: "4 Years", fees: 16178 },
       { name: "Business Administration (Ross)", degree: "B.B.A.", duration: "4 Years", fees: 16178 },
       { name: "Information Analysis", degree: "B.S.I.", duration: "4 Years", fees: 16178 },
@@ -361,7 +363,7 @@ const collegesData: SeedCollegeInput[] = [
     applicationDeadline: "November 15",
     websiteUrl: "https://www.washington.edu",
     courses: [
-      { name: "Paul G. Allen School of CS & Engineering", degree: "B.S.", duration: "4 Years", fees: 12242 },
+      { name: "Computer Science & Engineering (Allen School)", degree: "B.S.", duration: "4 Years", fees: 12242 },
       { name: "Bioengineering", degree: "B.S.", duration: "4 Years", fees: 12242 },
     ],
     placements: [
@@ -566,12 +568,26 @@ for (let i = 0; i < stateConfigs.length; i++) {
       avgGpa: +(Math.max(3.1, 3.95 - (idCounter * 0.008))).toFixed(2),
       applicationDeadline: j % 2 === 0 ? "January 15" : "February 1",
       websiteUrl: `https://www.${slug}.edu`,
-      courses: [
-        { name: "Information Technology", degree: "B.S.", duration: "4 Years", fees: inStateFees },
-        { name: "Business Administration", degree: "B.B.A.", duration: "4 Years", fees: inStateFees },
-        { name: "Biological Sciences", degree: "B.S.", duration: "4 Years", fees: inStateFees },
-        { name: "Applied Data Analytics", degree: "M.S.", duration: "2 Years", fees: inStateFees },
-      ],
+      courses: (discipline.includes("Tech") || discipline.includes("Polytechnic") || discipline.includes("Engineering"))
+        ? [
+            { name: "Computer Science", degree: "B.S.", duration: "4 Years", fees: inStateFees },
+            { name: "Data Science & Artificial Intelligence", degree: "B.S.", duration: "4 Years", fees: inStateFees },
+            { name: "Mechanical Engineering", degree: "B.S.", duration: "4 Years", fees: inStateFees },
+            { name: "Electrical Engineering", degree: "B.S.", duration: "4 Years", fees: inStateFees },
+          ]
+        : (discipline.includes("State") || discipline.includes("Research") || discipline.includes("University"))
+        ? [
+            { name: "Computer Science", degree: "B.S.", duration: "4 Years", fees: inStateFees },
+            { name: "Business Administration", degree: "B.B.A.", duration: "4 Years", fees: inStateFees },
+            { name: "Economics", degree: "B.A.", duration: "4 Years", fees: inStateFees },
+            { name: "Biomedical Sciences", degree: "B.S.", duration: "4 Years", fees: inStateFees },
+          ]
+        : [
+            { name: "Business Administration", degree: "B.B.A.", duration: "4 Years", fees: inStateFees },
+            { name: "Economics", degree: "B.A.", duration: "4 Years", fees: inStateFees },
+            { name: "Biomedical Sciences", degree: "B.S.", duration: "4 Years", fees: inStateFees },
+            { name: "Information Technology", degree: "B.S.", duration: "4 Years", fees: inStateFees },
+          ],
       placements: [
         {
           year: 2024,

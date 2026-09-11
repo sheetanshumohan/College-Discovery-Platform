@@ -32,6 +32,7 @@ function CollegesDiscoveryContent() {
 
   // Parse and manage reactive state for filters, sorting, page, and display mode
   const [search, setSearch] = useState<string | undefined>(() => searchParams.get('search') || undefined);
+  const [course, setCourse] = useState<string | undefined>(() => searchParams.get('course') || undefined);
   const [location, setLocation] = useState<string | undefined>(() => searchParams.get('location') || undefined);
   const [minFees, setMinFees] = useState<number | undefined>(() =>
     searchParams.get('minFees') ? Number(searchParams.get('minFees')) : undefined
@@ -101,6 +102,7 @@ function CollegesDiscoveryContent() {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       setSearch(params.get('search') || undefined);
+      setCourse(params.get('course') || undefined);
       setLocation(params.get('location') || undefined);
       setMinFees(params.get('minFees') ? Number(params.get('minFees')) : undefined);
       setMaxFees(params.get('maxFees') ? Number(params.get('maxFees')) : undefined);
@@ -124,6 +126,7 @@ function CollegesDiscoveryContent() {
 
     const apiParams = new URLSearchParams();
     if (search) apiParams.set('search', search);
+    if (course) apiParams.set('course', course);
     if (location) apiParams.set('location', location);
     if (minFees !== undefined) apiParams.set('minFees', String(minFees));
     if (maxFees !== undefined) apiParams.set('maxFees', String(maxFees));
@@ -167,6 +170,7 @@ function CollegesDiscoveryContent() {
       });
   }, [
     search,
+    course,
     location,
     minFees,
     maxFees,
@@ -185,6 +189,7 @@ function CollegesDiscoveryContent() {
       const nextPg = loadedPage + 1;
       const apiParams = new URLSearchParams();
       if (search) apiParams.set('search', search);
+      if (course) apiParams.set('course', course);
       if (location) apiParams.set('location', location);
       if (minFees !== undefined) apiParams.set('minFees', String(minFees));
       if (maxFees !== undefined) apiParams.set('maxFees', String(maxFees));
@@ -275,9 +280,10 @@ function CollegesDiscoveryContent() {
   };
 
   // Handler for removing a single active filter chip
-  const handleRemoveFilter = (key: 'search' | 'location' | 'minFees' | 'maxFees' | 'minRating') => {
+  const handleRemoveFilter = (key: 'search' | 'course' | 'location' | 'minFees' | 'maxFees' | 'minRating') => {
     setIsLoading(true);
     if (key === 'search') setSearch(undefined);
+    if (key === 'course') setCourse(undefined);
     if (key === 'location') setLocation(undefined);
     if (key === 'minFees') setMinFees(undefined);
     if (key === 'maxFees') setMaxFees(undefined);
@@ -294,6 +300,7 @@ function CollegesDiscoveryContent() {
   const handleResetAll = () => {
     setIsLoading(true);
     setSearch(undefined);
+    setCourse(undefined);
     setLocation(undefined);
     setMinFees(undefined);
     setMaxFees(undefined);
@@ -303,6 +310,7 @@ function CollegesDiscoveryContent() {
     setLoadedPage(1);
     updateQueryParams({
       search: undefined,
+      course: undefined,
       location: undefined,
       minFees: undefined,
       maxFees: undefined,
@@ -460,6 +468,7 @@ function CollegesDiscoveryContent() {
             {/* Active Filter Chips */}
             <ActiveFilterChips
               search={search}
+              course={course}
               location={location}
               minFees={minFees}
               maxFees={maxFees}
