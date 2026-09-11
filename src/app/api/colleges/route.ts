@@ -168,12 +168,19 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(total / limit) || 1;
 
-    return successResponse(colleges, 200, {
-      page,
-      limit,
-      total,
-      totalPages,
-    });
+    return successResponse(
+      colleges,
+      200,
+      {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+      {
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+      }
+    );
   } catch (error) {
     console.error('Error fetching colleges:', error);
     return errorResponse('INTERNAL_SERVER_ERROR', 'Failed to retrieve college listing', 500);

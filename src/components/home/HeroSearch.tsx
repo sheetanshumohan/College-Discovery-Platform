@@ -52,6 +52,27 @@ const POPULAR_LOCATIONS = [
   { label: 'Washington (WA)', value: 'WA' },
 ];
 
+function highlightMatch(text: string, query: string) {
+  if (!query || !query.trim()) return text;
+  const trimmed = query.trim();
+  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${escaped})`, 'gi');
+  const parts = text.split(regex);
+  return (
+    <>
+      {parts.map((part, i) =>
+        regex.test(part) ? (
+          <span key={i} className="text-indigo-600 font-bold bg-indigo-50/90 px-0.5 rounded">
+            {part}
+          </span>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+}
+
 export function HeroSearch() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
@@ -221,7 +242,15 @@ export function HeroSearch() {
           <Search className="w-4 h-4 text-indigo-500 shrink-0" />
           <input
             ref={searchInputRef}
+            id="hero-college-search-input"
             type="text"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={showSearchDropdown}
+            aria-controls="hero-college-suggestions-list"
+            aria-activedescendant={
+              activeSuggestionIndex >= 0 ? `college-suggestion-${activeSuggestionIndex}` : undefined
+            }
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -236,17 +265,17 @@ export function HeroSearch() {
             placeholder="Search by university name, major, or keyword..."
             className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
             autoComplete="off"
-            aria-autocomplete="list"
-            aria-expanded={showSearchDropdown}
           />
           {searchTerm && (
             <button
               type="button"
               onClick={() => {
                 setSearchTerm('');
+                setActiveSuggestionIndex(-1);
                 searchInputRef.current?.focus();
               }}
-              className="text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-200/60"
+              aria-label="Clear search input"
+              className="text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-200/60 transition-colors cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -283,7 +312,8 @@ export function HeroSearch() {
                 setLocationTerm('');
                 locationInputRef.current?.focus();
               }}
-              className="text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-200/60"
+              aria-label="Clear location input"
+              className="text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-200/60 transition-colors cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -328,18 +358,25 @@ export function HeroSearch() {
           </div>
 
           {/* College Items */}
-          <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+          <div
+            id="hero-college-suggestions-list"
+            role="listbox"
+            className="max-h-72 overflow-y-auto divide-y divide-slate-100"
+          >
             {collegeSuggestions.length > 0 ? (
               collegeSuggestions.map((col, index) => {
                 const isSelected = index === activeSuggestionIndex;
                 return (
                   <button
                     key={col.id}
+                    id={`college-suggestion-${index}`}
+                    role="option"
+                    aria-selected={isSelected}
                     type="button"
                     onClick={() => handleSelectCollege(col.slug)}
                     onMouseEnter={() => setActiveSuggestionIndex(index)}
                     className={`w-full text-left px-4 py-3 flex items-center justify-between gap-3 transition-colors cursor-pointer ${
-                      isSelected ? 'bg-indigo-50/80 text-indigo-950' : 'hover:bg-slate-50 text-slate-800'
+                      isSelected ? 'bg-indigo-50/90 text-indigo-950' : 'hover:bg-slate-50 text-slate-800'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -348,12 +385,12 @@ export function HeroSearch() {
                       </div>
                       <div className="min-w-0">
                         <div className="font-semibold text-sm text-slate-900 truncate">
-                          {col.name}
+                          {highlightMatch(col.name, searchTerm)}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
                           <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-slate-400" />
-                            {col.city}, {col.state}
+                            <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                            {highlightMatch(`${col.city}, ${col.state}`, searchTerm)}
                           </span>
                           <span>•</span>
                           <span className="font-mono text-slate-600">

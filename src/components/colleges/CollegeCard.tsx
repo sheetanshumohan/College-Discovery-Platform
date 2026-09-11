@@ -49,7 +49,7 @@ export function CollegeCard({ college, initialIsSaved = false }: CollegeCardProp
     : 'N/A';
 
   return (
-    <div className="group relative bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between overflow-hidden">
+    <div className="group relative bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-lg hover:border-indigo-200/80 hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between overflow-hidden">
       {/* Top Banner / Badges Bar */}
       <div className="p-5 pb-3">
         <div className="flex items-start justify-between gap-2 mb-2">
@@ -69,13 +69,13 @@ export function CollegeCard({ college, initialIsSaved = false }: CollegeCardProp
               onClick={handleSaveToggle}
               disabled={isSaving}
               aria-label={isSaved ? 'Remove from saved' : 'Save college'}
-              className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+              className={`p-1.5 rounded-md transition-all active:scale-90 cursor-pointer ${
                 isSaved
-                  ? 'text-rose-600 bg-rose-50 hover:bg-rose-100'
+                  ? 'text-rose-600 bg-rose-50 hover:bg-rose-100 ring-1 ring-rose-200/60'
                   : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
               }`}
             >
-              <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-rose-600' : ''}`} />
+              <Bookmark className={`w-4 h-4 transition-transform ${isSaved ? 'fill-rose-600 scale-105' : ''}`} />
             </button>
           </div>
         </div>

@@ -63,13 +63,15 @@ export function FilterSidebar({
   isOpenMobile = false,
   onCloseMobile,
 }: FilterSidebarProps) {
-  // Local state for debounced search text
+  // Local state for debounced search, location, and fee slider text
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const [locationInput, setLocationInput] = useState(filters.location || '');
+  const [sliderFeesInput, setSliderFeesInput] = useState<number>(filters.maxFees || 70000);
 
   // Synchronize during render when external props change
   const [prevSearchProp, setPrevSearchProp] = useState(filters.search);
   const [prevLocationProp, setPrevLocationProp] = useState(filters.location);
+  const [prevFeesProp, setPrevFeesProp] = useState(filters.maxFees);
 
   if (filters.search !== prevSearchProp) {
     setPrevSearchProp(filters.search);
@@ -81,14 +83,21 @@ export function FilterSidebar({
     setLocationInput(filters.location || '');
   }
 
+  if (filters.maxFees !== prevFeesProp) {
+    setPrevFeesProp(filters.maxFees);
+    setSliderFeesInput(filters.maxFees || 70000);
+  }
+
   const searchTimerRef = React.useRef<NodeJS.Timeout | null>(null);
   const locationTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const feesTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Clean up timers on unmount
   useEffect(() => {
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
       if (locationTimerRef.current) clearTimeout(locationTimerRef.current);
+      if (feesTimerRef.current) clearTimeout(feesTimerRef.current);
     };
   }, []);
 
@@ -112,6 +121,17 @@ export function FilterSidebar({
         location: val.trim() ? val.trim() : undefined,
       });
     }, 400);
+  };
+
+  const handleFeeSliderChange = (val: number) => {
+    setSliderFeesInput(val);
+    if (feesTimerRef.current) clearTimeout(feesTimerRef.current);
+    feesTimerRef.current = setTimeout(() => {
+      onChange({
+        ...filters,
+        maxFees: val >= 70000 ? undefined : val,
+      });
+    }, 250);
   };
 
   const hasFiltersActive = Boolean(
@@ -236,8 +256,8 @@ export function FilterSidebar({
             <DollarSign className="w-3.5 h-3.5 text-slate-400" />
             Max Annual Tuition
           </label>
-          <span className="text-xs font-bold font-mono text-indigo-600">
-            {filters.maxFees !== undefined ? formatCurrency(filters.maxFees) : 'Any'}
+          <span className="text-xs font-bold font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+            {sliderFeesInput >= 70000 ? 'Any (< $70k+)' : formatCurrency(sliderFeesInput)}
           </span>
         </div>
 
@@ -248,14 +268,8 @@ export function FilterSidebar({
           min="15000"
           max="70000"
           step="2500"
-          value={filters.maxFees || 70000}
-          onChange={(e) => {
-            const val = Number(e.target.value);
-            onChange({
-              ...filters,
-              maxFees: val >= 70000 ? undefined : val,
-            });
-          }}
+          value={sliderFeesInput}
+          onChange={(e) => handleFeeSliderChange(Number(e.target.value))}
           className="w-full accent-indigo-600 cursor-pointer mb-2"
         />
 
@@ -274,7 +288,11 @@ export function FilterSidebar({
               <button
                 key={preset.label}
                 type="button"
-                onClick={() => onChange({ ...filters, maxFees: preset.max })}
+                onClick={() => {
+                  if (feesTimerRef.current) clearTimeout(feesTimerRef.current);
+                  setSliderFeesInput(preset.max || 70000);
+                  onChange({ ...filters, maxFees: preset.max });
+                }}
                 className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
                   isSelected
                     ? 'bg-indigo-600 text-white font-semibold'

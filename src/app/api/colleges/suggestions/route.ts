@@ -28,13 +28,18 @@ export async function GET(request: NextRequest) {
         take: 6,
       });
 
-      return successResponse({
-        locations: collegesByLoc.map((c) => ({
-          city: c.city,
-          state: c.state,
-          label: `${c.city}, ${c.state}`,
-        })),
-      });
+      return successResponse(
+        {
+          locations: collegesByLoc.map((c) => ({
+            city: c.city,
+            state: c.state,
+            label: `${c.city}, ${c.state}`,
+          })),
+        },
+        200,
+        undefined,
+        { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' }
+      );
     }
 
     // Keyword suggestions (college name, city, state)
@@ -66,10 +71,15 @@ export async function GET(request: NextRequest) {
       take: 6,
     });
 
-    return successResponse({
-      colleges,
-      query: q,
-    });
+    return successResponse(
+      {
+        colleges,
+        query: q,
+      },
+      200,
+      undefined,
+      { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' }
+    );
   } catch (error) {
     return errorResponse(
       'SUGGESTIONS_ERROR',
