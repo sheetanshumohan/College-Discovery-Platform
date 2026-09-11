@@ -1,0 +1,162 @@
+// Prisma Schema for CollegeFinder
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CollegeType {
+  PUBLIC
+  PRIVATE_NON_PROFIT
+  PRIVATE_FOR_PROFIT
+}
+
+enum CampusSetting {
+  URBAN
+  SUBURBAN
+  RURAL
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  passwordHash  String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  reviews          Review[]
+  savedColleges    SavedCollege[]
+  savedComparisons SavedComparison[]
+
+  @@map("users")
+}
+
+model College {
+  id                  String         @id @default(cuid())
+  name                String
+  slug                String         @unique
+  location            String
+  city                String
+  state               String
+  description         String         @db.Text
+  fees                Int            // General / Annual tuition fees in USD
+  rating              Float          @default(0.0) // Aggregated / Editorial rating (e.g. 4.5)
+  
+  // Extended Institutional Profile fields
+  logoUrl             String?
+  coverImageUrl       String?
+  websiteUrl          String?
+  type                CollegeType    @default(PUBLIC)
+  campusSetting       CampusSetting  @default(URBAN)
+  nationalRanking     Int?
+  acceptanceRate      Float?         // 0.0 to 1.0 (e.g. 0.15 for 15%)
+  graduationRate      Float?         // 0.0 to 1.0 (e.g. 0.92 for 92%)
+  studentBodySize     Int?           // Total enrollment
+  studentFacultyRatio Int?           // e.g. 10 for 10:1
+  inStateTuition      Int?           // In-state annual tuition
+  outOfStateTuition   Int?           // Out-of-state annual tuition
+  avgFinancialAid     Int?           // Average need-based grant/aid
+  roomAndBoard        Int?           // Annual room and board
+  avgSatScore         Int?           // 400-1600
+  avgActScore         Int?           // 1-36
+  avgGpa              Float?         // 0.0 - 4.0
+  applicationDeadline String?
+
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  courses             Course[]
+  placements          Placement[]
+  reviews             Review[]
+  savedByUsers        SavedCollege[]
+
+  @@index([slug])
+  @@index([name])
+  @@index([location])
+  @@index([state])
+  @@index([fees])
+  @@index([rating])
+  @@index([nationalRanking])
+  @@index([acceptanceRate])
+  @@map("colleges")
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  collegeId   String
+  college     College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  name        String
+  degree      String   // e.g. "B.S.", "B.Tech", "M.S.", "MBA"
+  duration    String   // e.g. "4 Years", "2 Years"
+  fees        Int      // Course annual/total fee
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([collegeId])
+  @@map("courses")
+}
+
+model Placement {
+  id             String   @id @default(cuid())
+  collegeId      String
+  college        College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  averagePackage Float    // Average package in thousands USD (e.g. 95.0 for $95,000)
+  highestPackage Float    // Highest package in thousands USD (e.g. 180.0 for $180,000)
+  placementRate  Float    // Percentage (e.g. 94.5 for 94.5%)
+  year           Int      // e.g. 2024
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([collegeId])
+  @@map("placements")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  collegeId String
+  college   College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int      // 1 to 5 stars
+  comment   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([collegeId])
+  @@index([userId])
+  @@map("reviews")
+}
+
+model SavedCollege {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collegeId String
+  college   College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+
+  // Database-level unique constraint preventing a user from saving the same college twice
+  @@unique([userId, collegeId])
+  @@index([collegeId])
+  @@map("saved_colleges")
+}
+
+model SavedComparison {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String?
+  collegeIds String[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@map("saved_comparisons")
+}
+
