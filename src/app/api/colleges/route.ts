@@ -46,14 +46,32 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      andConditions.push({
-        OR: [
-          { name: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } },
-          { city: { contains: search, mode: 'insensitive' } },
-          { state: { contains: search, mode: 'insensitive' } },
-        ],
-      });
+      const trimmed = search.trim();
+      if (trimmed.length === 2) {
+        // 2-letter query: specifically match state code (e.g. "CA", "NY", "TX") or short college acronym in name
+        andConditions.push({
+          OR: [
+            { state: { equals: trimmed.toUpperCase(), mode: 'insensitive' } },
+            { name: { contains: trimmed, mode: 'insensitive' } },
+          ],
+        });
+      } else {
+        andConditions.push({
+          OR: [
+            { name: { contains: trimmed, mode: 'insensitive' } },
+            { description: { contains: trimmed, mode: 'insensitive' } },
+            { city: { contains: trimmed, mode: 'insensitive' } },
+            { state: { contains: trimmed, mode: 'insensitive' } },
+            {
+              courses: {
+                some: {
+                  name: { contains: trimmed, mode: 'insensitive' },
+                },
+              },
+            },
+          ],
+        });
+      }
     }
 
     if (location) {

@@ -53,7 +53,18 @@ test.describe('CollegeFinder Backend API Test Suite', () => {
       assert.ok(json.data.length > 0);
       for (const item of json.data) {
         const text = `${item.name} ${item.description} ${item.city} ${item.state}`.toLowerCase();
-        assert.ok(text.includes('technology') || text.includes('tech'));
+        const matchesText = text.includes('technology') || text.includes('tech');
+        if (matchesText) {
+          assert.ok(true);
+        } else {
+          const courseCount = await prisma.course.count({
+            where: {
+              collegeId: item.id,
+              name: { contains: 'technology', mode: 'insensitive' },
+            },
+          });
+          assert.ok(courseCount > 0, `College ${item.name} does not match search query`);
+        }
       }
     });
 

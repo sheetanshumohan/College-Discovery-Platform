@@ -2,16 +2,48 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { Columns3, X, ArrowRight } from 'lucide-react';
 import { useCompare } from '@/context/CompareContext';
 import { Button } from '@/components/ui/Button';
 
 export function CompareDock() {
+  const router = useRouter();
+  const pathname = usePathname();
   const { compareItems, compareIds, removeFromCompare, clearCompare, maxLimit } = useCompare();
 
   if (compareItems.length === 0) return null;
 
   const compareUrl = `/compare?ids=${compareIds.join(',')}`;
+
+  const handleClearAll = (e: React.MouseEvent) => {
+    e.preventDefault();
+    clearCompare();
+    if (pathname.startsWith('/compare')) {
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', '/compare');
+      }
+      router.replace('/compare');
+    }
+  };
+
+  const handleRemove = (id: string) => {
+    removeFromCompare(id);
+    if (pathname.startsWith('/compare')) {
+      const remaining = compareIds.filter((cid) => cid !== id);
+      if (remaining.length >= 2) {
+        if (typeof window !== 'undefined') {
+          window.history.replaceState(null, '', `/compare?ids=${remaining.join(',')}`);
+        }
+        router.replace(`/compare?ids=${remaining.join(',')}`);
+      } else {
+        if (typeof window !== 'undefined') {
+          window.history.replaceState(null, '', '/compare');
+        }
+        router.replace('/compare');
+      }
+    }
+  };
 
   return (
     <aside
@@ -30,7 +62,7 @@ export function CompareDock() {
         </div>
 
         <button
-          onClick={clearCompare}
+          onClick={handleClearAll}
           className="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
         >
           Clear All
@@ -48,7 +80,7 @@ export function CompareDock() {
               {item.name || 'Selected College'}
             </span>
             <button
-              onClick={() => removeFromCompare(item.id)}
+              onClick={() => handleRemove(item.id)}
               aria-label={`Remove ${item.name || 'college'} from comparison`}
               className="text-slate-400 hover:text-rose-400 p-0.5 rounded cursor-pointer transition-colors"
             >

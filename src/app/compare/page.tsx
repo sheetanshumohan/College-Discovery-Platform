@@ -221,12 +221,34 @@ function CompareContent() {
     };
   }, [activeIds.join(','), retryCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Synchronize with external CompareTray clear events
+  useEffect(() => {
+    const handleCompareSync = () => {
+      const stored = localStorage.getItem('cf_compare_colleges_v2');
+      if (!stored || stored === '[]') {
+        setColleges([]);
+        if (typeof window !== 'undefined' && window.location.search) {
+          window.history.replaceState(null, '', '/compare');
+          router.replace('/compare');
+        }
+      }
+    };
+    window.addEventListener('cf_compare_updated', handleCompareSync);
+    return () => window.removeEventListener('cf_compare_updated', handleCompareSync);
+  }, [router]);
+
   const handleRemoveCollege = (idToRemove: string) => {
     removeFromCompare(idToRemove);
     const updated = activeIds.filter((id) => id !== idToRemove);
     if (updated.length >= 2) {
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', `/compare?ids=${updated.join(',')}`);
+      }
       router.replace(`/compare?ids=${updated.join(',')}`);
     } else {
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', '/compare');
+      }
       router.replace('/compare');
       setColleges([]);
     }
@@ -234,8 +256,11 @@ function CompareContent() {
 
   const handleClearAll = () => {
     clearCompare();
-    router.replace('/compare');
     setColleges([]);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/compare');
+    }
+    router.replace('/compare');
   };
 
   const formatCurrency = (val?: number | null) => {
@@ -436,11 +461,11 @@ function CompareContent() {
       {/* Main Comparison Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         {/* Responsive Desktop & Tablet Matrix (Sticky Labels Column + Scrollable Data) */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-md">
+          <div className="overflow-auto max-h-[calc(100vh-140px)] rounded-2xl">
             <table className="w-full border-collapse text-left text-sm min-w-[640px]">
               {/* College Card Headers (Sticky on scroll) */}
-              <thead className="sticky top-0 z-20 shadow-xs bg-white/95 backdrop-blur-md">
+              <thead className="sticky top-0 z-20 bg-white/98 shadow-xs backdrop-blur-md">
                 <tr className="border-b border-slate-200">
                   <th className="p-4 sm:p-5 w-48 sm:w-64 font-bold text-slate-500 uppercase text-xs tracking-wider sticky left-0 top-0 bg-slate-50/98 backdrop-blur-md z-30 border-r border-slate-200">
                     Institution
@@ -449,7 +474,7 @@ function CompareContent() {
                   {colleges.map((college) => (
                     <th
                       key={college.id}
-                      className="p-4 sm:p-5 w-64 sm:w-80 align-top bg-white/95 backdrop-blur-md border-r border-slate-100 last:border-r-0"
+                      className="p-4 sm:p-5 w-64 sm:w-80 align-top sticky top-0 z-20 bg-white/98 backdrop-blur-md border-r border-slate-100 last:border-r-0"
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -489,7 +514,7 @@ function CompareContent() {
 
                   {/* Interactive Quick-Add 3rd Slot placeholder if only 2 colleges selected */}
                   {colleges.length === 2 && (
-                    <th className="p-4 sm:p-5 w-64 sm:w-80 align-top bg-slate-50/40 border-r border-slate-100">
+                    <th className="p-4 sm:p-5 w-64 sm:w-80 align-top sticky top-0 z-20 bg-slate-50/90 backdrop-blur-md border-r border-slate-100">
                       <div className="p-4 border-2 border-dashed border-indigo-200 rounded-xl bg-white/90 flex flex-col items-center justify-center text-center">
                         <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center mb-1.5">
                           <Plus className="w-4 h-4" />
